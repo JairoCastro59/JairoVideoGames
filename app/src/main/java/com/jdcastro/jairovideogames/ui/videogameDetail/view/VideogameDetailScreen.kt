@@ -10,6 +10,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -20,6 +22,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.constraintlayout.compose.ConstraintLayout
@@ -31,11 +35,9 @@ import com.jdcastro.jairovideogames.ui.dashboard.viewModel.DashboardViewModel
 fun VideogameDetailScreen(viewModel: DashboardViewModel, id: Int) {
 
     val videogameSelected = viewModel.getVideogameDetail.observeAsState()
-
     Box(
         Modifier
             .fillMaxSize()
-            .fillMaxHeight()
             .padding(top = 40.dp, bottom = 5.dp)
     ) {
         viewModel.getVideogameDetail(id)
@@ -47,7 +49,7 @@ fun VideogameDetailScreen(viewModel: DashboardViewModel, id: Int) {
 fun DetailCard(item: VideogameObj?) {
     val context = LocalContext.current
 
-    ConstraintLayout {
+    ConstraintLayout (Modifier.fillMaxHeight()) {
         val (image, title, developer, releaseDate, platform, descripcion, categoria, urlBtn, perfilBtn) = createRefs()
 
         AsyncImage(
@@ -106,19 +108,26 @@ fun DetailCard(item: VideogameObj?) {
                 }), Color.Black)
 
             DescriptionRow(it.short_description, Modifier
+                .wrapContentHeight(align = Alignment.CenterVertically)
                 .padding(top = 8.dp, start = 16.dp, end = 16.dp)
                 .constrainAs(descripcion, {
+                    centerHorizontallyTo(parent)
                     top.linkTo(categoria.bottom)
                     start.linkTo(parent.start)
                     end.linkTo(parent.end)
+                    bottom.linkTo(urlBtn.top)
                 }), Color.Black)
 
             Button(
-                modifier = Modifier.constrainAs(urlBtn, {
-                    top.linkTo(descripcion.bottom)
+                modifier = Modifier
+                    .wrapContentWidth()
+                    .padding(start = 32.dp, end = 8.dp)
+                    .constrainAs(urlBtn, {
                     start.linkTo(parent.start)
-                    end.linkTo(parent.end)
-                }),
+                    end.linkTo(perfilBtn.start)
+                    bottom.linkTo(parent.bottom)
+
+                    }),
                 onClick = {
                 val urlIntent = Intent(
                     Intent.ACTION_VIEW,
@@ -128,7 +137,6 @@ fun DetailCard(item: VideogameObj?) {
             }) {
                 Text(
                     text = "Web del Videojuego",
-                    modifier = Modifier.padding(10.dp),
                     color = Color.White,
                     fontSize = 15.sp
                 )
@@ -136,11 +144,11 @@ fun DetailCard(item: VideogameObj?) {
 
             Button(
                 modifier = Modifier
-                    .padding(top = 4.dp, start = 8.dp, end = 8.dp)
+                    .wrapContentWidth()
+                    .padding(end = 32.dp, start = 8.dp)
                     .constrainAs(perfilBtn, {
-                    top.linkTo(urlBtn.bottom)
                     bottom.linkTo(parent.bottom)
-                    start.linkTo(parent.start)
+                    start.linkTo(urlBtn.end)
                     end.linkTo(parent.end)
                 }),
                 onClick = {
@@ -152,13 +160,10 @@ fun DetailCard(item: VideogameObj?) {
                 }) {
                 Text(
                     text = "Perfil del Videojuego",
-                    modifier = Modifier.padding(10.dp),
                     color = Color.White,
                     fontSize = 15.sp
                 )
             }
-
-
         }
     }
 
@@ -185,6 +190,7 @@ fun SubtitleRow(text: String, modifier: Modifier, color: Color) {
         color = color,
         fontSize = 13.sp,
         fontWeight = FontWeight.SemiBold)
+
 }
 
 @Composable
@@ -194,6 +200,7 @@ fun DescriptionRow(text: String, modifier: Modifier, color: Color) {
         text = text,
         color = color,
         fontSize = 11.sp,
+        textAlign = TextAlign.Justify,
         fontWeight = FontWeight.Normal)
 }
 

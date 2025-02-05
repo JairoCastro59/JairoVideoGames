@@ -1,10 +1,10 @@
 package com.jdcastro.jairovideogames.ui.dashboard.view
 
+import android.util.Log
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.combinedClickable
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -19,8 +19,6 @@ import androidx.compose.foundation.lazy.grid.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.State
-import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -32,31 +30,71 @@ import coil3.compose.AsyncImage
 import com.jdcastro.jairovideogames.domain.models.VideogameObj
 import com.jdcastro.jairovideogames.ui.dashboard.viewModel.DashboardViewModel
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.constraintlayout.compose.ConstraintLayout
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.jdcastro.jairovideogames.ui.components.AlertDialogDelete
 import com.jdcastro.jairovideogames.ui.components.SearchField
 import com.jdcastro.jairovideogames.ui.components.SpinnerComponent
+import com.jdcastro.jairovideogames.ui.state.VideogameStateUI
 
 @Composable
-fun DashboardScreen(viewModel: DashboardViewModel, navigateToDetail: (Int) ->Unit) {
-    val videogamesList = viewModel.getVideogames.observeAsState()
+fun DashboardScreen(
+    viewModel: DashboardViewModel,
+    navigateToDetail: (Int) -> Unit
+) {
+    var videogameList by remember { mutableStateOf(arrayListOf<VideogameObj>()) }
+
+    viewModel.videogameStateUI.collectAsStateWithLifecycle().value.let { value ->
+        when(value) {
+            is VideogameStateUI.Loading -> { ProgressViewLoading() }
+            is VideogameStateUI.Error -> { Log.e("ERROR", value.msg) }
+            is VideogameStateUI.Success -> { videogameList = value.videogames }
+        }
+    }
+
     Box (
         Modifier.fillMaxSize()
             .background(Color.LightGray)
     ) {
-        viewModel.getVideogameLocal()
-        VideogameList(viewModel, videogamesList, navigateToDetail)
+        VideogameList(viewModel, videogameList, navigateToDetail)
+    }
+}
+
+@Composable
+fun ProgressViewLoading() {
+    ConstraintLayout (
+        modifier = Modifier
+        .background(Color.DarkGray)
+        .fillMaxSize()
+    ) {
+        val (progressIndicator) = createRefs()
+
+        CircularProgressIndicator(
+            modifier = Modifier
+                .width(64.dp)
+                .constrainAs(progressIndicator, {
+                    start.linkTo(parent.start)
+                    end.linkTo(parent.end)
+                    top.linkTo(parent.top)
+                    bottom.linkTo(parent.bottom)
+                }),
+            color = Color.White,
+            trackColor = Color.Gray,
+        )
     }
 }
 
 @Composable
 fun VideogameList(
     viewModel: DashboardViewModel,
-    videogamesList: State<ArrayList<VideogameObj>?>,
+    videogamesList: ArrayList<VideogameObj>,
     navigateToDetail: (Int) -> Unit
 ) {
     val searchQuery by viewModel.queryText.collectAsState()
@@ -99,7 +137,6 @@ fun VideogameList(
                     }
                 )
         )
-
         LazyVerticalGrid(
             modifier = Modifier.constrainAs(
                 grid,
@@ -111,7 +148,7 @@ fun VideogameList(
             ),
             columns = GridCells.Fixed(2),
             content = {
-                videogamesList.value?.let { list ->
+                videogamesList.let { list ->
                     itemsIndexed(list) { _, item ->
                         Spacer(modifier = Modifier.height(2.dp))
                         RowItem(viewModel, item, navigateToDetail)
@@ -130,10 +167,11 @@ fun RowItem(viewModel: DashboardViewModel, item: VideogameObj?, navigateToDetail
     if (shouldShowDialog.value) {
         AlertDialogDelete(shouldShowDialog = shouldShowDialog, viewModel = viewModel, item = item)
     }
-    Column (
+
+    ConstraintLayout (
         modifier = Modifier
             .width(200.dp)
-            .height(300.dp)
+            .wrapContentHeight()
             .padding(12.dp)
             .border(2.dp, Color.Black)
             .background(Color.White)
@@ -143,29 +181,38 @@ fun RowItem(viewModel: DashboardViewModel, item: VideogameObj?, navigateToDetail
                 onLongClick = { shouldShowDialog.value = true }
             )
     ) {
+        val (vgImg, vgTitle) = createRefs()
         AsyncImage(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(150.dp)
+                .wrapContentHeight()
                 .clip(CircleShape)
-                .padding(4.dp),
+                .padding(4.dp).constrainAs(vgImg, {
+                    top.linkTo(parent.top)
+                    start.linkTo(parent.start)
+                    end.linkTo(parent.end)
+                }),
             model = item?.thumbnail,
             contentDescription = item?.title,
             contentScale = ContentScale.Crop
         )
-        Spacer(modifier = Modifier.height(2.dp))
-        TitleRow(item?.title)
+        TitleRow(item?.title,
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(Color.DarkGray)
+                .constrainAs(vgTitle, {
+                    top.linkTo(vgImg.bottom)
+                    start.linkTo(parent.start)
+                    end.linkTo(parent.end)
+                    bottom.linkTo(parent.bottom)
+                })
+        )
     }
 }
 
 @Composable
-fun TitleRow(title: String?) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(50.dp)
-            .background(Color.DarkGray)
-    ) {
+fun TitleRow(title: String?, modifier: Modifier) {
+    Row (modifier = modifier) {
         title?.let {
             Text(
                 text = it,

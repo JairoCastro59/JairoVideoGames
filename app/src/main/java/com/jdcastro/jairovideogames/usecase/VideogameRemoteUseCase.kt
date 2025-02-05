@@ -3,14 +3,18 @@ package com.jdcastro.jairovideogames.usecase
 import com.jdcastro.jairovideogames.data.database.entities.toEntity
 import com.jdcastro.jairovideogames.data.repository.VideogameRepository
 import com.jdcastro.jairovideogames.domain.models.VideogameObj
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flow
 import javax.inject.Inject
 
 class VideogameRemoteUseCase  @Inject constructor(
     private val dashboardRepository: VideogameRepository
 ) {
-    suspend operator fun invoke(): ArrayList<VideogameObj> {
+    val videogameList: Flow<ArrayList<VideogameObj>>  = flow {
         val response = dashboardRepository.getVideogamesFromApi()
-        dashboardRepository.insertVideogames(response.map { it.toEntity() })
-        return response
+        if (response.isNotEmpty()) {
+            dashboardRepository.insertVideogames(response.map { it.toEntity() })
+        }
+        emit(response)
     }
 }

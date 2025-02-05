@@ -96,6 +96,11 @@ dependencies {
     ksp(libs.androidx.room.compiler)
 
     implementation(libs.androidx.constraintlayout)
+    implementation(libs.lifecycle.viewmodel)
+    implementation(libs.androidx.activity)
 
-
+    testImplementation(libs.mockk) {
+        exclude(group = "net.bytebuddy", module = "byte-buddy")
+    }
+    implementation(libs.buddy)
 }

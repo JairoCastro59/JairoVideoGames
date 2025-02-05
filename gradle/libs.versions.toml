@@ -11,6 +11,7 @@ activityCompose = "1.9.3"
 composeBom = "2024.10.01"
 appcompat = "1.7.0"
 loggingInterceptor = "4.5.0"
+mockk = "1.12.2"
 navigationCompose = "1.2.0"
 material = "1.12.0"
 devtoolsKsp = "2.0.20-1.0.24"
@@ -27,6 +28,9 @@ roomCompiler = "2.6.1"
 roomKtx = "2.6.1"
 roomRuntime = "2.6.1"
 constraintLayout = "1.1.0"
+lifecycleViewModelVersion = "2.8.7"
+androidActivityVersion = "1.10.0"
+buddyVersion = "1.14.17"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -50,6 +54,7 @@ hilt = { module = "com.google.dagger:hilt-android", version.ref = "hiltAndroid" 
 hilt-android-compiler = { module = "com.google.dagger:dagger-compiler", version.ref = "hiltCompilerAndroid" }
 hilt-compiler = { module = "com.google.dagger:hilt-compiler", version.ref = "hiltAndroid" }
 hilt-navigation-compose = { module = "androidx.hilt:hilt-navigation-compose", version.ref = "navigationCompose" }
+mockk = { module = "io.mockk:mockk", version.ref = "mockk" }
 retrofit = { group = "com.jakewharton.retrofit", name = "retrofit2-kotlin-coroutines-adapter", version.ref = "retrofit" }
 gson = { group = "com.squareup.retrofit2" , name = "converter-gson", version.ref = "converter-gson" }
 runtime_livedata = { group = "androidx.compose.runtime" , name = "runtime-livedata", version.ref = "compose-version" }
@@ -61,6 +66,9 @@ androidx-room-compiler = { module = "androidx.room:room-compiler", version.ref =
 androidx-room-ktx = { module = "androidx.room:room-ktx", version.ref = "roomKtx" }
 androidx-room-runtime = { module = "androidx.room:room-runtime", version.ref = "roomRuntime" }
 androidx-constraintlayout = { module = "androidx.constraintlayout:constraintlayout-compose", version.ref = "constraintLayout" }
+lifecycle_viewmodel = { module = "androidx.lifecycle:lifecycle-viewmodel-ktx", version.ref = "lifecycleViewModelVersion" }
+androidx_activity = { module = "androidx.activity:activity-ktx", version.ref = "androidActivityVersion" }
+buddy = { group = "net.bytebuddy", name = "byte-buddy", version.ref = "buddyVersion" }
 
 
 [plugins]
@@ -71,6 +79,7 @@ devtools-ksp = { id = "com.google.devtools.ksp", version.ref = "devtoolsKsp" }
 hilt-android = { id = "com.google.dagger.hilt.android", version.ref = "hiltAndroid" }
 kotlin_parcelize = { id = "org.jetbrains.kotlin.plugin.parcelize", version.ref = "parcelize" }
 jetbrainKotlinSerialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin"}
+
 
 
 

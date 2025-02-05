@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.jdcastro.jairovideogames.domain.models.VideogameObj
 import com.jdcastro.jairovideogames.ui.dashboard.constants.DashboardConstants
+import com.jdcastro.jairovideogames.ui.state.VideogameStateUI
 import com.jdcastro.jairovideogames.usecase.DeleteVideogameUseCase
 import com.jdcastro.jairovideogames.usecase.GetCategoriesUseCase
 import com.jdcastro.jairovideogames.usecase.GetVideogameDetailUseCase
@@ -13,8 +14,12 @@ import com.jdcastro.jairovideogames.usecase.VideogameLocalUseCase
 import com.jdcastro.jairovideogames.usecase.VideogameRemoteUseCase
 import com.jdcastro.jairovideogames.usecase.VideogameSearchByTitleUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -29,38 +34,41 @@ class DashboardViewModel @Inject constructor(
     private val getVideogamesByCategoryUseCase: GetVideogamesByCategoryUseCase
 ) : ViewModel() {
 
-    private val _getVideogames = MutableLiveData<ArrayList<VideogameObj>?>()
-    val getVideogames get() = _getVideogames
-
     private val _getCategories = MutableLiveData<ArrayList<String>?>()
     val getCategories get() = _getCategories
 
     private val _getVideogameDetail = MutableLiveData<VideogameObj>()
     val getVideogameDetail get() = _getVideogameDetail
 
-    private val _showError = MutableLiveData<Unit>()
-    val showError get() = _showError
+    private val _videogameStateUI = MutableStateFlow<VideogameStateUI>(VideogameStateUI.Loading)
+    val videogameStateUI : StateFlow<VideogameStateUI> = _videogameStateUI
 
     private val _queryText = MutableStateFlow("")
     val queryText = _queryText.asStateFlow()
 
     fun getVideogames() = viewModelScope.launch {
-        videogameUseCase.invoke().let { _videogames ->
+        videogameUseCase.videogameList
+            .catch { VideogameStateUI.Error(it.message.orEmpty()) }
+            .flowOn(Dispatchers.IO)
+            .collect { _videogames ->
             if (_videogames.isNotEmpty()) {
-                    _getVideogames.value = _videogames
-                    getCategories()
-                } else {
-                    _showError.value = Unit
-                }
+                _videogameStateUI.value = VideogameStateUI.Success(_videogames)
+                getCategories()
+            } else {
+                _videogameStateUI.value = VideogameStateUI.Error("La lista esta vacia")
+            }
         }
     }
 
     fun getVideogameLocal() = viewModelScope.launch {
-        videogameLocalUseCase.invoke().let { _videogames ->
+        videogameLocalUseCase.videogameList
+            .catch { VideogameStateUI.Error(it.message.orEmpty()) }
+            .flowOn(Dispatchers.IO)
+            .collect { _videogames ->
             if (_videogames.isNotEmpty()) {
-                _getVideogames.value = _videogames
+                _videogameStateUI.value = VideogameStateUI.Success(_videogames)
             } else {
-                getVideogames()
+                 getVideogames()
             }
         }
     }
@@ -78,7 +86,7 @@ class DashboardViewModel @Inject constructor(
         } else {
             getVideogameSearchByTitleUseCase.invoke(query).let { _videogames ->
                 if (_videogames.isNotEmpty()) {
-                    _getVideogames.value = _videogames
+                    _videogameStateUI.value = VideogameStateUI.Success(_videogames)
                 }
             }
         }
@@ -90,7 +98,7 @@ class DashboardViewModel @Inject constructor(
     }
 
     fun getCategories() = viewModelScope.launch {
-        var categorias = arrayListOf<String>()
+        val categorias = arrayListOf<String>()
         getCategoriesUseCase.invoke().let { _categories ->
             if (_categories.isNotEmpty()) {
                 categorias.add(DashboardConstants.ALL_CATEGORIES)
@@ -106,7 +114,7 @@ class DashboardViewModel @Inject constructor(
         } else {
             getVideogamesByCategoryUseCase.invoke(category).let { _videogames ->
                 if (_videogames.isNotEmpty()) {
-                    _getVideogames.value = _videogames
+                    _videogameStateUI.value = VideogameStateUI.Success(_videogames)
                 }
             }
         }
